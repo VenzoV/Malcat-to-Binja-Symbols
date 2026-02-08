@@ -4,3 +4,8 @@ The scripts bridge the gap by converting Malcat’s File Offsets into the Virtua
 Included Scripts
 -Malcat_Symbols_Export.py Runs inside Malcat to extract identified functions. It applies a manual "delta" to rebase file offsets to memory addresses and saves them to a JSON file.
 -Binja_Malcat_Symbols_Import.py A Python script for the Binary Ninja console. It imports the JSON data, defines user symbols, and forces Binary Ninja to create functions at the new addresses.
+
+
+Instructions:
+1. Run Malcat_Symbols_Export.py -> Outputs json file
+2.Binja_Malcat_Symbols_Import.py  run in snippet editor with json file location.
