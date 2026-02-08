@@ -1,30 +1,45 @@
 import malcat
 import json
+import os
 
-output_path = r""
+def run():
+    if not analysis:
+        return
 
-# The hardcoded difference between File Offset and Virtual Address
-# Derived from SendReply: 0x515c30 (VA) - 0x115030 (Offset)
-delta = 0x400C00
+    symbols_list = []
+    output_path = r""
+    BASE_ADDRESS = 0x400000
 
-symbols = []
-for sym in analysis.syms:
-    # Filter: Must be a function AND must have a non-empty name
-    if sym.type == malcat.Symbol.Type.FUNCTION and sym.name.strip():
-        # Apply the hardcoded manual math
-        va = sym.address + delta
+    print(f"[*] Exporting Virtual Addresses from {analysis.file.name}...")
+
+    for sym in analysis.symbols:
+        # 1. Skip empty or null names
+        if not sym.name or not str(sym.name).strip():
+            continue
+
+        offset = getattr(sym, 'address', None)
+        if offset is not None:
+            va = getattr(sym, 'va', None)
+            
+            # Ensure va is a plain integer; fallback to manual calc
+            if va is None or not isinstance(va, int):
+                va = BASE_ADDRESS + offset
+
+            symbols_list.append({
+                "name": str(sym.name),
+                "address": hex(va) # Write as hex string (e.g. "0x515c30")
+            })
+
+    try:
+        os.makedirs(os.path.dirname(output_path), exist_ok=True)
+        with open(output_path, "w") as f:
+            json.dump(symbols_list, f, indent=4)
         
-        symbols.append({
-            "address": hex(va), 
-            "name": sym.name
-        })
+        print(f"[+] Successfully exported {len(symbols_list)} symbols.")
+        print(f"[+] Output saved to: {output_path}")
+                
+    except Exception as e:
+        print(f"[-] JSON Error: {str(e)}")
 
-try:
-    with open(output_path, "w") as f:
-        json.dump(symbols, f, indent=4)
-    print(f"Success! Exported {len(symbols)} functions using hardcoded delta {hex(delta)}.")
-    if symbols:
-        # This will now show 0x515c30 for SendReply
-        print(f"Verified: {symbols[0]['name']} is now at {symbols[0]['address']}")
-except Exception as e:
-    print(f"Failed to save: {e}")
+if __name__ == '__main__':
+    run()
