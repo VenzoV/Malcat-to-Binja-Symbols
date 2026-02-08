@@ -8,26 +8,26 @@ def run():
 
     symbols_list = []
     output_path = r""
-    BASE_ADDRESS = 0x400000
 
-    print(f"[*] Exporting Virtual Addresses from {analysis.file.name}...")
+    print(f"[*] Exporting Virtual Addresses using analysis.map.a2v...")
 
-    for sym in analysis.symbols:
-        # 1. Skip empty or null names
-        if not sym.name or not str(sym.name).strip():
+    # analysis.syms is the documentation-preferred collection for symbols
+    for sym in analysis.syms:
+        name = str(sym.name).strip()
+        
+        # Skip empty or generic internal names
+        if not name or name.startswith(('sub_', 'fn_', 'lbl_', 'ln_')):
             continue
 
-        offset = getattr(sym, 'address', None)
-        if offset is not None:
-            va = getattr(sym, 'va', None)
-            
-            # Ensure va is a plain integer; fallback to manual calc
-            if va is None or not isinstance(va, int):
-                va = BASE_ADDRESS + offset
+        # Documentation fix: 
+        # sym.address is an 'Effective Address'. 
+        # a2v() converts it to the absolute Virtual Address (VA).
+        va = analysis.map.a2v(sym.address)
 
+        if va is not None:
             symbols_list.append({
-                "name": str(sym.name),
-                "address": hex(va) # Write as hex string (e.g. "0x515c30")
+                "name": name,
+                "address": hex(va)
             })
 
     try:
@@ -36,10 +36,13 @@ def run():
             json.dump(symbols_list, f, indent=4)
         
         print(f"[+] Successfully exported {len(symbols_list)} symbols.")
-        print(f"[+] Output saved to: {output_path}")
+        # Verification for your specific address
+        for s in symbols_list:
+            if "Cmd).Run" in s['name']:
+                print(f"[!] Target Check: {s['name']} -> {s['address']}")
                 
     except Exception as e:
-        print(f"[-] JSON Error: {str(e)}")
+        print(f"[-] Error: {str(e)}")
 
 if __name__ == '__main__':
     run()
