@@ -1,7 +1,7 @@
 import malcat
 import json
 
-output_path = r"C:\Users\vboxuser\Downloads\malcat_go_export.json"
+output_path = r""
 
 # The hardcoded difference between File Offset and Virtual Address
 # Derived from SendReply: 0x515c30 (VA) - 0x115030 (Offset)
